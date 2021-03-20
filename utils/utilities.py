@@ -1,13 +1,25 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import cv2
+import cv2, torch
+import pandas as pd
 import os
 """ There are 16 balls in billiards, so 16 classes to detect
 """
-def compile_img():
-    """ Compile images together and save into a dataset
+def compile_img(n, objsdir, bgpath, size, datadir, labelfile):
+    """ Compile images together and save into a dataset at datadir
+        Save the answer labels as a compressed numpy array
     """
+    bg, objs = load_images(objsdir, bgpath)
+    answers = []
+    for i in range(n):
+        imgi, ansi = generate(img(bg, objs)
+        try:
+            cv2.imwrite(os.path.join(datadir, "img_"+i+".jpg"))
+            answers.append(ansi)
+    answers = np.asarray(answers)
+    np.savez_compressed(answers)
+
     return
 
 def generate_img(bg, objs):
@@ -18,6 +30,10 @@ def generate_img(bg, objs):
 
         objs: a list of lists with each row comprising of an object
         each col is an image of the object in a certain pose.
+        
+        return:
+            composed: image with the objects in a random pose overlaid on top
+            ans: binary vector for the presence of each object (1 if it is present in the image)
     """
     types,poses = objs.shape[0], objs.shape[1]
     objwidth, objheight = obj[0, 0].shape
@@ -31,7 +47,7 @@ def generate_img(bg, objs):
             poseidx = np.randint(0, poses)
             composed[coords[type][0]:coords[type][0]+objwidth][coords[type][1]:coords[type][1]+objheight] = objs[type][poseidx]
 
-    return composed
+    return composed, ans
 
 def generate_points_with_min_distance(n, shape, min_dist):
     # compute grid shape based on number of points
