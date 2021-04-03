@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -6,21 +7,31 @@ import pandas as pd
 import os
 """ There are 16 balls in billiards, so 16 classes to detect
 """
-def compile_img(n, objsdir, bgpath, size, datadir, labelfile):
+def compile_img(n, objsdir, bgpath, datadir):
     """ Compile images together and save into a dataset at datadir
         Save the answer labels as a compressed numpy array
+        Input:  n, size of dataset
+                objsdir, directory containing objects in subfolders
+                bgfile, file of the background image
+                datdir, directory to store the generated data in
+
+        Outpu:  Return the file of the annotations file
+                Store the annotations in  the data directory
+
     """
-    bg, objs = load_images(objsdir, bgpath)
+    bg, objs = load_images(objsdir, bgfile)
     answers = []
+    bboxlist = []
     for i in range(n):
-        imgi, ansi = generate(img(bg, objs)
+        imgi, ansi, bboxi = generate(img(bg, objs)
         try:
             cv2.imwrite(os.path.join(datadir, "img_"+i+".jpg"))
             answers.append(ansi)
+            bboxlist.append(bboxi)
     answers = np.asarray(answers)
-    np.savez_compressed(answers)
-
-    return
+    bboxlist = np.asarray(bboxlist)
+    np.savez_compressed(os.path.join(datadir, "annotations"), answers=answers, bboxes=bboxlist)
+    return os.path.join(datadir, "annotations")
 
 def generate_img(bg, objs):
     """ Generate a full image with a random set of objects within it
@@ -34,6 +45,7 @@ def generate_img(bg, objs):
         return:
             composed: image with the objects in a random pose overlaid on top
             ans: binary vector for the presence of each object (1 if it is present in the image)
+            bboxes: list of bounding boxes with [t, x0, y0, x1, y1] where t is the object type(category)
     """
     types,poses = objs.shape[0], objs.shape[1]
     objwidth, objheight = obj[0, 0].shape
@@ -42,12 +54,13 @@ def generate_img(bg, objs):
 
     ans = np.random.choice([0, 1], size=types, replace=True, p=[0.2, 0.8])
     coords = generate_points_with_min_distance(types, bg.shape, objwidth)
+    bboxes = []
     for type, v in enumerate(ans):
         if v == 1:
             poseidx = np.randint(0, poses)
             composed[coords[type][0]:coords[type][0]+objwidth][coords[type][1]:coords[type][1]+objheight] = objs[type][poseidx]
-
-    return composed, ans
+            bboxes.append([type, coords[type][0], coords[type][1], coords[type][0]+objwidth, coords[type][1]+objheight])
+    return composed, ans, bboxes
 
 def generate_points_with_min_distance(n, shape, min_dist):
     # compute grid shape based on number of points
@@ -72,7 +85,7 @@ def generate_points_with_min_distance(n, shape, min_dist):
 
     return coords.astype(int)
 
-def load_images(objsdir, bgpath):
+def load_images(objsdir, bgfile):
     """ iterate through every subdirectory containing object images and compile them into an array
         objsdir: path containing a directory for each object type
                  under each object type contains images of different poses of the object
@@ -83,7 +96,40 @@ def load_images(objsdir, bgpath):
     for objpath, objname in list_subfolders_with_paths:
         imgnames = [f.name for f in os.scandir(objpath)]
         objs.append([cv2.imread(os.path.join(objpath, imgname)) for imgname in imgnames])
-    bg = cv2.imread(bgpath)
+    bg = cv2.imread(bgfile)
     return bg, objs
 
+def get_dataset_for_detectron2(n, datadir):
+    """ Register the dataset as a standardized dataset for detectron2
+        Input:  n, size of the dataset
+                datadir, directory containing images and annotation arrays
+        Output: List of dictionaries containing entries of the dataset
+        Dictionary fields: file_name, height, width, image_id, annotations{bbox, bbox_mode=XYXY_ABS, category_id}
+    """
+    annos = np.load(os.path.join(datadir, "annotations"))
+    answers, bboxes = annos['answers'], annos['bboxes']
+    dataset_dict = []
+    for i in range(n):
+        record = {}
+        
+        filename = os.path.join(datadir, "img_%s"%(str(i))+".jpg")
+        height, width = cv2.imread(filename).shape[:2]
+
+        # create list of bboxes according to format
+        objs = []
+        for idx, box in enumerate(bboxes[i]):
+            obj = {
+                "category_id": box[0],
+                "bbox": [box[1:]],
+                "bbox_mode": BoxMode.XYXY_ABS
+            }
+            objs.append(obj)
+        # write all the information into the record entry
+        record["file_name"] = filename
+        record["height"] = height
+        record["width"] = width
+        record["annotations"] = objs
+
+        dataset_dict.append(record)
+    return dataset_dict
 
