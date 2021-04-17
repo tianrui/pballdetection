@@ -1,4 +1,3 @@
-import json
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -19,15 +18,17 @@ def compile_img(n, objsdir, bgpath, datadir):
                 Store the annotations in  the data directory
 
     """
-    bg, objs = load_images(objsdir, bgfile)
+    bg, objs = load_images(objsdir, bgpath)
     answers = []
     bboxlist = []
     for i in range(n):
-        imgi, ansi, bboxi = generate(img(bg, objs)
+        imgi, ansi, bboxi = generate_img(bg, objs)
         try:
-            cv2.imwrite(os.path.join(datadir, "img_"+i+".jpg"))
+            cv2.imwrite(str(os.path.join(datadir, "img_"+i+".png")), imgi)
             answers.append(ansi)
             bboxlist.append(bboxi)
+        except OSError as err:
+            print("Could not write image, OSError: {0}".format(err))
     answers = np.asarray(answers)
     bboxlist = np.asarray(bboxlist)
     np.savez_compressed(os.path.join(datadir, "annotations"), answers=answers, bboxes=bboxlist)
@@ -47,7 +48,7 @@ def generate_img(bg, objs):
             ans: binary vector for the presence of each object (1 if it is present in the image)
             bboxes: list of bounding boxes with [t, x0, y0, x1, y1] where t is the object type(category)
     """
-    types,poses = objs.shape[0], objs.shape[1]
+    types,poses = len(objs), len(objs[0])
     objwidth, objheight = obj[0, 0].shape
     bgwidth, bgheight = bg.shape
     composed = np.deepcopy(bg) # final image
