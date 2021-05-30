@@ -25,13 +25,13 @@ def compile_img(n, objsdir, bgpath, datadir):
         res = generate_img(bg, objs)
         imgi, ansi, bboxi = res
         try:
-            cv2.imwrite(str(os.path.join(datadir, "img_"+i+".png")), imgi)
+            cv2.imwrite(str(os.path.join(datadir, "img_"+str(i)+".png")), imgi)
             answers.append(ansi)
             bboxlist.append(bboxi)
         except OSError as err:
             print("Could not write image, OSError: {0}".format(err))
     answers = np.asarray(answers)
-    bboxlist = np.asarray(bboxlist)
+    bboxlist = np.asarray(bboxlist, dtype=object)
     np.savez_compressed(os.path.join(datadir, "annotations"), answers=answers, bboxes=bboxlist)
     return os.path.join(datadir, "annotations")
 
@@ -79,23 +79,19 @@ def generate_img(bg, objs):
     coords_shape[0] -= objwidth
     coords_shape[1] -= objheight
     coords = generate_points_with_min_distance(types, coords_shape, objwidth)
-    np.clip(coords[:][0], 0, bg.shape[0])
-    np.clip(coords[:][1], 0, bg.shape[1])
     bboxes = []
-    pdb.set_trace()
     for type, v in enumerate(ans):
         if v == 1:
             poses = len(objs[type])
             poseidx = np.random.randint(0, poses)
 
             currentobjwidth, currentobjheight = objs[type][poseidx].shape[:2]
-            composed[coords[type][0]:coords[type][0]+currentobjwidth][coords[type][1]:coords[type][1]+currentobjheight] = objs[type][poseidx]
+            composed[coords[type][0]:coords[type][0]+currentobjwidth, coords[type][1]:coords[type][1]+currentobjheight][:] = objs[type][poseidx]
             bboxes.append([type, coords[type][0], coords[type][1], coords[type][0]+currentobjwidth, coords[type][1]+currentobjheight])
     return composed, ans, bboxes
 
 def generate_points_with_min_distance(n, shape, min_dist):
     # compute grid shape based on number of points
-    pdb.set_trace()
     width_ratio = shape[1] / shape[0]
     num_y = np.int32(np.sqrt(n / width_ratio)) + 1
     num_x = np.int32(n / num_y) + 1
@@ -114,7 +110,10 @@ def generate_points_with_min_distance(n, shape, min_dist):
                                 high=max_movement,
                                 size=(len(coords), 2))
     coords += noise
-
+    # clip the coords to be inside the shape
+    clippedx = np.clip(coords[:, 0], 0, shape[0])
+    clippedy = np.clip(coords[:, 1], 0, shape[1])
+    coords = np.array(list(zip(clippedx, clippedy)))
     return coords.astype(int)
 
 def load_images(objsdir, bgfile):
