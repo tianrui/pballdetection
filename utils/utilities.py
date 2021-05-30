@@ -3,8 +3,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import cv2, torch
 import pandas as pd
-import os
-""" There are 16 balls in billiards, so 16 classes to detect
+import os, pdb, copy
+""" 16 balls in billiards, so 16 classes to detect
 """
 def compile_img(n, objsdir, bgpath, datadir):
     """ Compile images together and save into a dataset at datadir
@@ -14,7 +14,7 @@ def compile_img(n, objsdir, bgpath, datadir):
                 bgfile, file of the background image
                 datdir, directory to store the generated data in
 
-        Outpu:  Return the file of the annotations file
+        Output:  Return the file of the annotations file
                 Store the annotations in  the data directory
 
     """
@@ -22,7 +22,8 @@ def compile_img(n, objsdir, bgpath, datadir):
     answers = []
     bboxlist = []
     for i in range(n):
-        imgi, ansi, bboxi = generate_img(bg, objs)
+        res = generate_img(bg, objs)
+        imgi, ansi, bboxi = res
         try:
             cv2.imwrite(str(os.path.join(datadir, "img_"+i+".png")), imgi)
             answers.append(ansi)
@@ -33,6 +34,22 @@ def compile_img(n, objsdir, bgpath, datadir):
     bboxlist = np.asarray(bboxlist)
     np.savez_compressed(os.path.join(datadir, "annotations"), answers=answers, bboxes=bboxlist)
     return os.path.join(datadir, "annotations")
+
+def resize_object_images(bg, objs):
+    """ for each object that we have poses for, resize the image to be 1/10 of the shortest
+        background side, and keep the aspect ratio. the object images are roughly square in aspect ratios.
+        1/10 is an arbitrary selection.
+        input is in AxB, background is in CxD, to get the resize to be 1/10 the scaling factor is min of 
+        (C/10)/A, (D/10)/A
+
+    """
+    bgwidth, bgheight = bg.shape[:2]
+    for typeidx, type in enumerate(objs):
+        for imageidx, image in enumerate(type):
+            scaling = min(bgwidth/(10 * image.shape[0]), bgheight/(10 * image.shape[0]))
+            # provide output dimensions as a tuple
+            objs[typeidx][imageidx] = cv2.resize(image, (int(scaling * image.shape[0]), int(scaling * image.shape[1])), cv2.INTER_AREA)
+    return bg, objs
 
 def generate_img(bg, objs):
     """ Generate a full image with a random set of objects within it
@@ -48,23 +65,37 @@ def generate_img(bg, objs):
             ans: binary vector for the presence of each object (1 if it is present in the image)
             bboxes: list of bounding boxes with [t, x0, y0, x1, y1] where t is the object type(category)
     """
+    bg, objs = resize_object_images(bg, objs)
     types,poses = len(objs), len(objs[0])
-    objwidth, objheight = obj[0, 0].shape
-    bgwidth, bgheight = bg.shape
-    composed = np.deepcopy(bg) # final image
+    bgwidth, bgheight = bg.shape[:2]
+    objwidth, objheight = (objs[0][0]).shape[:2]
+    
+    #set the object height/width to be 1/10 of the shortest background dimension. No longer necessary with resizing done before
+    #objwidth, objheight = min(bg.shape)//10, min(bg.shape)
+    composed = copy.deepcopy(bg) # final image
 
     ans = np.random.choice([0, 1], size=types, replace=True, p=[0.2, 0.8])
-    coords = generate_points_with_min_distance(types, bg.shape, objwidth)
+    coords_shape = list(bg.shape[:2])
+    coords_shape[0] -= objwidth
+    coords_shape[1] -= objheight
+    coords = generate_points_with_min_distance(types, coords_shape, objwidth)
+    np.clip(coords[:][0], 0, bg.shape[0])
+    np.clip(coords[:][1], 0, bg.shape[1])
     bboxes = []
+    pdb.set_trace()
     for type, v in enumerate(ans):
         if v == 1:
-            poseidx = np.randint(0, poses)
-            composed[coords[type][0]:coords[type][0]+objwidth][coords[type][1]:coords[type][1]+objheight] = objs[type][poseidx]
-            bboxes.append([type, coords[type][0], coords[type][1], coords[type][0]+objwidth, coords[type][1]+objheight])
+            poses = len(objs[type])
+            poseidx = np.random.randint(0, poses)
+
+            currentobjwidth, currentobjheight = objs[type][poseidx].shape[:2]
+            composed[coords[type][0]:coords[type][0]+currentobjwidth][coords[type][1]:coords[type][1]+currentobjheight] = objs[type][poseidx]
+            bboxes.append([type, coords[type][0], coords[type][1], coords[type][0]+currentobjwidth, coords[type][1]+currentobjheight])
     return composed, ans, bboxes
 
 def generate_points_with_min_distance(n, shape, min_dist):
     # compute grid shape based on number of points
+    pdb.set_trace()
     width_ratio = shape[1] / shape[0]
     num_y = np.int32(np.sqrt(n / width_ratio)) + 1
     num_x = np.int32(n / num_y) + 1
