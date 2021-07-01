@@ -139,7 +139,7 @@ def get_dataset_for_detectron2(n, datadir):
     """
     annos = np.load(os.path.join(datadir, "annotations"))
     answers, bboxes = annos['answers'], annos['bboxes']
-    dataset_dict = []
+    dataset_dicts = []
     for i in range(n):
         record = {}
         
@@ -161,6 +161,9 @@ def get_dataset_for_detectron2(n, datadir):
         record["width"] = width
         record["annotations"] = objs
 
-        dataset_dict.append(record)
-    return dataset_dict
+        dataset_dicts.append(record)
+    return dataset_dicts
 
+def get_pball_dicts(datadir):
+    n = 1000
+    return get_dataset_for_detectron2(n, datadir)
