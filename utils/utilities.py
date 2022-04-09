@@ -140,7 +140,7 @@ def get_dataset_for_detectron2(n, datadir):
     annos = np.load(os.path.join(datadir, "annotations.npz"), allow_pickle=True)
     answers, bboxes = annos['answers'], annos['bboxes']
     dataset_dicts = []
-    pdb.set_trace()
+    #pdb.set_trace()
     for i in range(n):
         record = {}
         
@@ -152,8 +152,8 @@ def get_dataset_for_detectron2(n, datadir):
         for idx, box in enumerate(bboxes[i]):
             obj = {
                 "category_id": box[0],
-                "bbox": [box[1:]],
-                "bbox_mode": BoxMode.XYXY_ABS
+                "bbox": box[1:]
+                #"bbox_mode": BoxMode.XYXY_ABS
             }
             objs.append(obj)
         # write all the information into the record entry

@@ -61,6 +61,7 @@ def load_eager_od_data(n):
     # Dictionary fields: file_name, height, width, image_id, annotations{bbox, bbox_mode=XYXY_ABS, category_id}
     images = []
     annotations = []
+    pdb.set_trace()
     for i in range(n):
         filename_i = dictslist[i]["file_name"]
         height = dictslist[i]["height"]
@@ -69,7 +70,7 @@ def load_eager_od_data(n):
         # only add if class 1 is in the image as initial test
         for anno in annotationlist:
             if anno["category_id"] == 1:
-                relcoord = np.array([anno["bbox"][0] / width, anno["bbox"][1] / height, anno["bbox"][2] / width, anno["bbox"][3] / height], dtype=np.float32)
+                relcoord = np.array([anno["bbox"][0] / height, anno["bbox"][1] / width, anno["bbox"][2] / height, anno["bbox"][3] / width], dtype=np.float32)
                 annotations.append(relcoord)
                 images.append(load_image_into_numpy_array(filename_i))
 
@@ -150,6 +151,7 @@ def poolball_test():
     plt.rcParams['ytick.right'] = False
     plt.rcParams['figure.figsize'] = [14, 7]
 
+    pdb.set_trace()
     for idx, train_image_np in enumerate(train_images_np):
       plt.subplot(2, 3, idx+1)
       plt.imshow(train_image_np)
@@ -189,7 +191,6 @@ def poolball_test():
     Below we add the class annotations (for simplicity, we assume a single class in this colab; though it should be straightforward to extend this to handle multiple classes).  We also convert everything to the format that the training
     loop below expects (e.g., everything converted to tensors, classes converted to one-hot representations, etc.).
     """
-
     # By convention, our non-background classes start counting at 1.  Given
     # that we will be predicting just one class, we will therefore assign it a
     # `class id` of 1.
