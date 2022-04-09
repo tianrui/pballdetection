@@ -16,18 +16,18 @@ Estimated time to run through this colab (with GPU): < 5 minutes.
 ## Imports
 """
 
-!pip install -U --pre tensorflow=="2.2.0"0
+#!pip install -U --pre tensorflow=="2.2.0"0
 
 import os
 import pathlib
 import pdb
 pdb.set_trace()
-# Clone the tensorflow models repository if it doesn't already exist
-if "models" in pathlib.Path.cwd().parts:
-  while "models" in pathlib.Path.cwd().parts:
-    os.chdir('..')
-elif not pathlib.Path('models').exists():
-  !git clone --depth 1 https://github.com/tensorflow/models
+# # Clone the tensorflow models repository if it doesn't already exist
+# if "models" in pathlib.Path.cwd().parts:
+#   while "models" in pathlib.Path.cwd().parts:
+#     os.chdir('..')
+# elif not pathlib.Path('models').exists():
+#   !git clone --depth 1 https://github.com/tensorflow/models
 
 # Commented out IPython magic to ensure Python compatibility.
 # # Install the Object Detection API
@@ -40,7 +40,9 @@ elif not pathlib.Path('models').exists():
 # Commented out IPython magic to ensure Python compatibility.
 import matplotlib
 import matplotlib.pyplot as plt
-
+import tkinter
+matplotlib.use("TkAgg")
+print("Current backend: %s" % (matplotlib.get_backend()))
 import os
 import random
 import io
@@ -58,7 +60,7 @@ import tensorflow as tf
 from object_detection.utils import label_map_util
 from object_detection.utils import config_util
 from object_detection.utils import visualization_utils as viz_utils
-from object_detection.utils import colab_utils
+#from object_detection.utils import colab_utils
 from object_detection.builders import model_builder
 
 # %matplotlib inline
@@ -125,7 +127,6 @@ def plot_detections(image_np,
 We will start with some toy (literally) data consisting of 5 images of a rubber
 ducky.  Note that the [coco](https://cocodataset.org/#explore) dataset contains a number of animals, but notably, it does *not* contain rubber duckies (or even ducks for that matter), so this is a novel class.
 """
-
 # Load images and visualize
 train_image_dir = 'models/research/object_detection/test_images/ducky/train/'
 train_images_np = []
@@ -145,6 +146,8 @@ plt.rcParams['figure.figsize'] = [14, 7]
 for idx, train_image_np in enumerate(train_images_np):
   plt.subplot(2, 3, idx+1)
   plt.imshow(train_image_np)
+pdb.set_trace()
+matplotlib.use("TkAgg")
 plt.show()
 
 """# Annotate images with bounding boxes
@@ -156,8 +159,8 @@ If you'd like to skip the manual annotation step, we totally understand.  In thi
 
 """
 
-gt_boxes = []
-colab_utils.annotate(train_images_np, box_storage_pointer=gt_boxes)
+#gt_boxes = []
+#colab_utils.annotate(train_images_np, box_storage_pointer=gt_boxes) # comment out the reliance on google-colab environment
 
 """# In case you didn't want to label...
 
@@ -231,11 +234,11 @@ In this cell we build a single stage detection architecture (RetinaNet) and rest
 For simplicity, we have hardcoded a number of things in this colab for the specific RetinaNet architecture at hand (including assuming that the image size will always be 640x640), however it is not difficult to generalize to other model configurations.
 """
 
-# Download the checkpoint and put it into models/research/object_detection/test_data/
-
-!wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
-!tar -xf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
-!mv ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint models/research/object_detection/test_data/
+# # Download the checkpoint and put it into models/research/object_detection/test_data/
+# 
+# !wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+# !tar -xf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+# !mv ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint models/research/object_detection/test_data/
 
 tf.keras.backend.clear_session()
 

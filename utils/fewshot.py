@@ -1,12 +1,12 @@
 import os
 import pathlib
-
+import pdb
 # Clone the tensorflow models repository if it doesn't already exist
-if "models" in pathlib.Path.cwd().parts:
-  while "models" in pathlib.Path.cwd().parts:
-    os.chdir('..')
-elif not pathlib.Path('models').exists():
-  !git clone --depth 1 https://github.com/tensorflow/models
+# if "models" in pathlib.Path.cwd().parts:
+#   while "models" in pathlib.Path.cwd().parts:
+#     os.chdir('..')
+# elif not pathlib.Path('models').exists():
+#   !git clone --depth 1 https://github.com/tensorflow/models
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ from object_detection.utils import visualization_utils as viz_utils
 from object_detection.utils import colab_utils
 from object_detection.builders import model_builder
 
-%matplotlib inline
+#%matplotlib inline
 
 
 def load_image_into_numpy_array(path):
@@ -90,6 +90,7 @@ def plot_detections(image_np,
     plt.imshow(image_np_with_annotations)
 
 # Load images and visualize
+pdb.set_trace()
 train_image_dir = 'models/research/object_detection/test_images/ducky/train/'
 train_images_np = []
 for i in range(1, 6):
@@ -163,9 +164,9 @@ plt.show()
 
 # Download the checkpoint and put it into models/research/object_detection/test_data/
 
-!wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
-!tar -xf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
-!mv ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint models/research/object_detection/test_data/
+#!wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+#!tar -xf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+#!mv ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint models/research/object_detection/test_data/
 
 tf.keras.backend.clear_session()
 

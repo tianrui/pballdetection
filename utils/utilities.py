@@ -137,13 +137,14 @@ def get_dataset_for_detectron2(n, datadir):
         Output: List of dictionaries containing entries of the dataset
         Dictionary fields: file_name, height, width, image_id, annotations{bbox, bbox_mode=XYXY_ABS, category_id}
     """
-    annos = np.load(os.path.join(datadir, "annotations"))
+    annos = np.load(os.path.join(datadir, "annotations.npz"), allow_pickle=True)
     answers, bboxes = annos['answers'], annos['bboxes']
     dataset_dicts = []
+    pdb.set_trace()
     for i in range(n):
         record = {}
         
-        filename = os.path.join(datadir, "img_%s"%(str(i))+".jpg")
+        filename = os.path.join(datadir, "img_%s"%(str(i))+".png")
         height, width = cv2.imread(filename).shape[:2]
 
         # create list of bboxes according to format
