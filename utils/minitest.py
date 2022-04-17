@@ -70,7 +70,7 @@ def load_eager_od_data(n):
         # only add if class 1 is in the image as initial test
         for anno in annotationlist:
             if anno["category_id"] == 1:
-                relcoord = np.array([anno["bbox"][0] / height, anno["bbox"][1] / width, anno["bbox"][2] / height, anno["bbox"][3] / width], dtype=np.float32)
+                relcoord = np.array([[anno["bbox"][0] / height, anno["bbox"][1] / width, anno["bbox"][2] / height, anno["bbox"][3] / width]], dtype=np.float32)
                 annotations.append(relcoord)
                 images.append(load_image_into_numpy_array(filename_i))
 
@@ -140,8 +140,9 @@ def poolball_test():
     # Load images and visualize
     train_image_dir = '~/Documents/pballdetection/dataset'
     train_images_np = []
-    n = 30
+    n = 10
     train_images_np, gt_boxes = load_eager_od_data(n)
+    n = len(gt_boxes)
     plt.rcParams['axes.grid'] = False
     plt.rcParams['xtick.labelsize'] = False
     plt.rcParams['ytick.labelsize'] = False
@@ -153,8 +154,9 @@ def poolball_test():
 
     pdb.set_trace()
     for idx, train_image_np in enumerate(train_images_np):
-      plt.subplot(2, 3, idx+1)
-      plt.imshow(train_image_np)
+      if idx < 9:
+        plt.subplot(3, 3, idx+1)
+        plt.imshow(train_image_np)
     pdb.set_trace()
     matplotlib.use("TkAgg")
     plt.show()
@@ -383,10 +385,11 @@ def poolball_test():
         + ', loss=' +  str(total_loss.numpy()), flush=True)
 
     print('Done fine-tuning!')
-    pdb.set_trace()
+    #pdb.set_trace()
 
     """# Load test images and run inference with new model!"""
 
+    pdb.set_trace()
     test_image_dir = './dataset/test'
     test_images_np = []
     for i in range(n, 50):
@@ -427,8 +430,8 @@ def poolball_test():
           detections['detection_classes'][0].numpy().astype(np.uint32)
           + label_id_offset,
           detections['detection_scores'][0].numpy(),
-          category_index, figsize=(15, 20))
-          #category_index, figsize=(15, 20), image_name="gif_frame_" + ('%02d' % i) + ".jpg")
+          #category_index, figsize=(15, 20))
+          category_index, figsize=(15, 20), image_name="test_" + ('%02d' % i) + ".jpg")
 
     #imageio.plugins.freeimage.download()
 
